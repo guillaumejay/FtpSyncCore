@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 using FTPSync.Logic.Infra;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NFluent;
 
 namespace FTPSync.Tests
 {
+    /// <summary>
+    /// Basic tests for settings validity
+    /// </summary>
     [TestClass]
     public class SettingTests
     {
@@ -17,7 +17,7 @@ namespace FTPSync.Tests
         {
             DestinationFTP settings =
                 CreateDefaultSettings();
-          settings.actionIfFileExists = "test";
+            settings.actionIfFileExists = "test";
             var validate = settings.Validate(null);
             Check.That(validate).CountIs(1);
             settings.actionIfFileExists = DestinationFTP.IfExistsDontTransfer;
@@ -30,10 +30,13 @@ namespace FTPSync.Tests
 
         private static DestinationFTP CreateDefaultSettings()
         {
-            return new DestinationFTP { actionIfFileExists = DestinationFTP.IfExistsOverwrite,
+            return new DestinationFTP
+            {
+                actionIfFileExists = DestinationFTP.IfExistsOverwrite,
                 mode = DestinationFTP.ModeActive,
-                protocol="FTP",
-                address="localhost"
+                protocol = "FTP",
+                address = "localhost",
+                encryption = "None"
             };
         }
 
@@ -58,10 +61,23 @@ namespace FTPSync.Tests
             DestinationFTP settings = CreateDefaultSettings();
             settings.address = null;
             ICollection<ValidationResult> result;
-            DefinitionFTP.TryValidate(settings,out result);
-           
+            DefinitionFTP.TryValidate(settings, out result);
             Check.That(result).CountIs(1);
-            
         }
-}
+        [TestMethod]
+        public void EncryptionMustBeValid()
+        {
+            DestinationFTP settings = CreateDefaultSettings();
+            settings.encryption = null;
+            ICollection<ValidationResult> result;
+            DefinitionFTP.TryValidate(settings, out result);
+            Check.That(result).CountIs(1);
+            settings.encryption = "TLS";
+            DefinitionFTP.TryValidate(settings, out result);
+            Check.That(result).CountIs(0);
+            settings.encryption = "SSL";
+            DefinitionFTP.TryValidate(settings, out result);
+            Check.That(result).CountIs(0);
+        }
+    }
 }

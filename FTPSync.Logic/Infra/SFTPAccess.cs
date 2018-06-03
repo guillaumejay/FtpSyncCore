@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using Renci.SshNet;
-using Renci.SshNet.Sftp;
 
 namespace FTPSync.Logic.Infra
 {
@@ -58,8 +55,9 @@ namespace FTPSync.Logic.Infra
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="settings">see FTPDestination check for ifExists and removePrepend</param>
+        ///    /// <param name="prepend">File Prefix or null</param>
         /// <returns>True if uploaded, false if not uploaded because already existing</returns>
-        public bool UploadFile(string from, string to, DestinationFTP settings)
+        public bool UploadFile(string from, string to, DestinationFTP settings, string prepend)
         {
             if (!File.Exists(from))
             {
@@ -75,7 +73,7 @@ namespace FTPSync.Logic.Infra
 
                 _client.UploadFile(fileStream, to, true, null);
             }
-            RenameIfPrepend(to,settings);
+            RenameIfPrepend(to, prepend);
             return true;
         }
 

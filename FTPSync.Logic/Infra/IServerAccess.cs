@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Text;
+﻿using System.Collections.Generic;
 
 namespace FTPSync.Logic.Infra
 {
@@ -23,8 +20,9 @@ namespace FTPSync.Logic.Infra
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="settings">see FTPDestination check for ifExists and removePrepend</param>
+        /// <param name="prepend">File Prefix or null</param>
         /// <returns>True if uploaded, false if not uploaded because already existing</returns>
-        bool UploadFile(string from, string to,DestinationFTP settings);
+        bool UploadFile(string from, string to,DestinationFTP settings,string prepend);
 
         void DeleteFile(string file);
     }

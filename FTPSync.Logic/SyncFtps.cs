@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
 using FTPSync.Logic.Infra;
 
 namespace FTPSync.Logic
@@ -33,7 +31,7 @@ namespace FTPSync.Logic
                 }
                 _logger.Info("Connecting to Source " + settings.sourceFTP.address);
                 var source = ServerAccess.CreateAccessTo(settings.sourceFTP);
-                List<string> sourceList = source.GetFileList(settings.sourceFTP.GetPrepend());
+                List<string> sourceList = source.GetFileList(settings.changeFileNamePrepend);
                 _logger.Info($"{sourceList.Count} files found to transfer");
                 if (sourceList.Count == 0)
                 {
@@ -43,7 +41,7 @@ namespace FTPSync.Logic
                 if (Directory.Exists("tmp"))
                     Directory.CreateDirectory("tmp");
 
-                string prepend = settings.sourceFTP.GetPrepend();
+                string prepend = settings.changeFileNamePrepend;
                 foreach (string sourceFile in sourceList)
                 {
                     string currentFile = sourceFile;
@@ -59,7 +57,7 @@ namespace FTPSync.Logic
                     source.Disconnect();
                     _logger.Info("Uploading " + localFile);
                     var destinationClient = ServerAccess.CreateAccessTo(settings.destinationFTP);
-                    if (destinationClient.UploadFile(localFile, currentFile, settings.destinationFTP))
+                    if (destinationClient.UploadFile(localFile, currentFile, settings.destinationFTP,settings.changeFileNamePrepend))
                     {
                         nbUploaded++;
                     }

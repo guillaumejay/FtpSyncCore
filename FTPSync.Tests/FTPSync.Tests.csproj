@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FTPSync.Logic\FTPSync.Logic.csproj" />
+    <ProjectReference Include="..\FtpSync.Logic\FtpSync.Logic.csproj" />
   </ItemGroup>
 
 </Project>

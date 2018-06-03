@@ -1,7 +1,4 @@
-﻿
-
-// ReSharper disable InconsistentNaming
-
+﻿// ReSharper disable InconsistentNaming
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -10,7 +7,6 @@ using System.Linq;
 
 namespace FTPSync.Logic.Infra
 {
-    
     public interface IFTPSettings
     {
          string protocol { get; set; }
@@ -65,6 +61,14 @@ namespace FTPSync.Logic.Infra
             {
                 result.Add(new ValidationResult($"protocol must be one of {String.Join(",", validValues)}"));
             }
+            validValues = new List<string> { "None","SSL","TLS" };
+            if (protocol == "FTP")
+            {
+                if (validValues.Contains(encryption) == false)
+                {
+                    result.Add(new ValidationResult($"encryption must be one of {String.Join(",", validValues)}"));
+                }
+            }
             return result;
         }
     }
@@ -72,18 +76,7 @@ namespace FTPSync.Logic.Infra
     [DebuggerDisplay("{address} Delete {deleteFileAfterTransfer}")]
     public class SourceFTP: DefinitionFTP
     { 
-
-        public bool changeFileNameBeforeTransfer { get; set; }
-        public string changeFileNamePrepend { get; set; }
         public bool deleteFileAfterTransfer { get; set; }
-
-        public string GetPrepend()
-        {
-            if (changeFileNameBeforeTransfer)
-                return changeFileNamePrepend;
-            return null;
-        }
-      
     }
 
     public class DestinationFTP:DefinitionFTP
@@ -91,18 +84,8 @@ namespace FTPSync.Logic.Infra
         public static readonly string IfExistsOverwrite = "Overwrite";
         public static readonly string IfExistsDontTransfer = "DontTransfer";
 
-        public bool changeFileNameAfterTransfer { get; set; }
-        public string changeFileNamerRemovePrepend { get; set; }
         public string actionIfFileExists { get; set; }
 
-
-
-        public string GetPrepend()
-        {
-            if (changeFileNameAfterTransfer)
-                return changeFileNamerRemovePrepend;
-            return null;
-        }
 
         public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
@@ -120,6 +103,7 @@ namespace FTPSync.Logic.Infra
     public class SyncSettings
     {
         public int serviceIntervalInMinutes { get; set; }
+        public string changeFileNamePrepend { get; set; }
         public SourceFTP sourceFTP { get; set; }
         public DestinationFTP destinationFTP { get; set; }
         public List<ValidationResult> Validate()

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Runtime.CompilerServices;
 using FluentFTP;
 
 namespace FTPSync.Logic.Infra
@@ -26,7 +25,7 @@ namespace FTPSync.Logic.Infra
         public bool Connect(IFTPSettings settings)
         {
             _client?.Disconnect();
-            var addressPort = settings.address.Split(":");
+            var addressPort = settings.address.Split(':');
             int port = 21;
             NetworkCredential nwc = null;
             if (addressPort.Length > 1)
@@ -43,7 +42,8 @@ namespace FTPSync.Logic.Infra
             {
                 DataConnectionType = (settings.mode.ToLower() == "active")
                     ? FtpDataConnectionType.AutoActive
-                    : FtpDataConnectionType.AutoPassive
+                    : FtpDataConnectionType.AutoPassive,
+               
             };
 
             _client.Connect();
@@ -92,8 +92,9 @@ namespace FTPSync.Logic.Infra
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <param name="settings">see FTPDestination check for ifExists and removePrepend</param>
+        /// <param name="prepend">Prefix for file (or null)</param>
         /// <returns>True if uploaded, false if not uploaded because already existing</returns>
-        public bool UploadFile(string from, string to, DestinationFTP settings)
+        public bool UploadFile(string from, string to, DestinationFTP settings,string prepend)
         {
             if (!File.Exists(from))
             {
@@ -105,7 +106,7 @@ namespace FTPSync.Logic.Infra
                     return false;
             }
             _client.UploadFile(from, to,FtpExists.Overwrite);
-            RenameIfPrepend(to, settings);
+            RenameIfPrepend(to, prepend);
             return true;
         }
 

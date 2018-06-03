@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Reflection.Metadata.Ecma335;
-using System.Text;
 
 namespace FTPSync.Logic.Infra
 {
@@ -20,9 +18,8 @@ namespace FTPSync.Logic.Infra
             }
 
         }
-        protected void RenameIfPrepend(string to, DestinationFTP settings)
+        protected void RenameIfPrepend(string to,string prepend)
         {
-            string prepend = settings.GetPrepend();
             if (!string.IsNullOrEmpty(prepend))
             {
                 if (to.StartsWith(prepend))
