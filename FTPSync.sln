@@ -5,7 +5,9 @@ VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FTPSync", "FTPSync\FTPSync.csproj", "{2802C201-C906-4685-93A6-B359F0CD44F0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FTPSync.Logic", "FTPSync.Logic\FTPSync.Logic.csproj", "{B521CF99-7518-42F9-8851-DF384615793E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FTPSync.Logic", "FTPSync.Logic\FTPSync.Logic.csproj", "{B521CF99-7518-42F9-8851-DF384615793E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FTPSync.Tests", "FTPSync.Tests\FTPSync.Tests.csproj", "{C23FDD3A-3036-4867-ABEF-DBD0D7626BDB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,23 +23,15 @@ Global
 		{B521CF99-7518-42F9-8851-DF384615793E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B521CF99-7518-42F9-8851-DF384615793E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B521CF99-7518-42F9-8851-DF384615793E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C23FDD3A-3036-4867-ABEF-DBD0D7626BDB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C23FDD3A-3036-4867-ABEF-DBD0D7626BDB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C23FDD3A-3036-4867-ABEF-DBD0D7626BDB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C23FDD3A-3036-4867-ABEF-DBD0D7626BDB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FE705847-7EDC-486C-A5FB-8D5E27339576}
-	EndGlobalSection
-	GlobalSection(TeamFoundationVersionControl) = preSolution
-		SccNumberOfProjects = 3
-		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
-		SccTeamFoundationServer = https://guillaumejay.visualstudio.com/
-		SccLocalPath0 = .
-		SccProjectUniqueName1 = FTPSync\\FTPSync.csproj
-		SccProjectName1 = FTPSync
-		SccLocalPath1 = FTPSync
-		SccProjectUniqueName2 = FTPSync.Logic\\FTPSync.Logic.csproj
-		SccProjectName2 = FTPSync.Logic
-		SccLocalPath2 = FTPSync.Logic
 	EndGlobalSection
 EndGlobal

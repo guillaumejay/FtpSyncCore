@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using FluentFTP;
+using FTPSync.Logic;
 using FTPSync.Logic.Infra;
 using Microsoft.Extensions.Configuration;
+using NLog;
 using Renci.SshNet;
 
 namespace FTPSync
@@ -17,14 +19,18 @@ namespace FTPSync
             var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appSettings.json");
             var configuration = builder.Build();
-            var settings = new MySettings();
+            var settings = new SyncSettings();
             configuration.Bind(settings);
             
-            Console.WriteLine($"serviceIntervalInMinutes {settings.serviceIntervalInMinutes}");
-            Console.WriteLine($"SourceFTP/address {settings.sourceFTP.address}");
-            Console.WriteLine($"DestinationFTP/address {settings.destinationFTP.address}");
-            Console.WriteLine($"Connecting to FTP/{settings.sourceFTP.address}");
-            var source = ServerAccessFactory.CreateAccessTo(settings.sourceFTP);
+
+            NLog.Logger logger = NLog.LogManager.LoadConfiguration("NLog.config").GetCurrentClassLogger();
+            logger.Info($"serviceIntervalInMinutes {settings.serviceIntervalInMinutes}");
+            logger.Info($"SourceFTP/address {settings.sourceFTP.address}");
+            logger.Info($"DestinationFTP/address {settings.destinationFTP.address}");
+            SyncFtps sf=new SyncFtps(logger);
+            sf.Process(settings);
+            //    Console.WriteLine($"Connecting to FTP/{settings.sourceFTP.address}");
+            //var source = ServerAccess.CreateAccessTo(settings.sourceFTP);
             //var sourceClient = ConnectToFtp(settings.sourceFTP);
             //foreach (FtpListItem item in sourceClient.GetListing(settings.sourceFTP.directory))
             //{
@@ -34,20 +40,20 @@ namespace FTPSync
             //    {
             //        Console.WriteLine(item.FullName);
             //    }
-                
-            //}
-            foreach (string file in source.GetFileList())
-            {
-                Console.WriteLine(file);
-            }
 
-            IFTPSettings destSettings = settings.destinationFTP as IFTPSettings;
-            Console.WriteLine($"Connecting to SFTP/{destSettings.address}");
-            var destination = ServerAccessFactory.CreateAccessTo(destSettings);
-            foreach (string file in destination.GetFileList())
-            {
-                Console.WriteLine(file);
-            }
+            //}
+            //foreach (string file in source.GetFileList())
+            //{
+            //    Console.WriteLine(file);
+            //}
+
+            //IFTPSettings destSettings = settings.destinationFTP as IFTPSettings;
+            //Console.WriteLine($"Connecting to SFTP/{destSettings.address}");
+            //var destination = ServerAccess.CreateAccessTo(destSettings);
+            //foreach (string file in destination.GetFileList())
+            //{
+            //    Console.WriteLine(file);
+            //}
             //var connectionInfo = new ConnectionInfo(destination.address,
             //    settings.destinationFTP.userName,
             //    new PasswordAuthenticationMethod(settings.destinationFTP.userName,settings.destinationFTP.password)
@@ -65,15 +71,6 @@ namespace FTPSync
             //}
         }
 
-        private static FtpClient ConnectToFtp(IFTPSettings settings)
-        {
-            FtpClient client=new FtpClient($"{settings.address}");
-            if (!string.IsNullOrEmpty(settings.userName) && settings.userName != "anonymous")
-            {
-                client.Credentials = new NetworkCredential(settings.userName, settings.password);
-            }
-            client.Connect();
-            return client;
-        }
+
     }
 }

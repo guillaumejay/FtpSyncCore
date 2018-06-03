@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
+using System.Runtime.CompilerServices;
 using FluentFTP;
 
 namespace FTPSync.Logic.Infra
 {
-    public class FTPAccess : IServerAccess, IDisposable
+    public class FTPAccess : ServerAccess,IServerAccess, IDisposable
     {
         private FtpClient _client;
 
@@ -24,17 +26,32 @@ namespace FTPSync.Logic.Infra
         public bool Connect(IFTPSettings settings)
         {
             _client?.Disconnect();
-            _client = new FtpClient($"{settings.address}");
+            var addressPort = settings.address.Split(":");
+            int port = 21;
+            NetworkCredential nwc = null;
+            if (addressPort.Length > 1)
+            {
+                port = Convert.ToInt32(addressPort[1]);
+            }
+            
             if (!string.IsNullOrEmpty(settings.userName) && settings.userName != "anonymous")
             {
-                _client.Credentials = new NetworkCredential(settings.userName, settings.password);
+                nwc = new NetworkCredential(settings.userName, settings.password);
             }
+
+            _client = new FtpClient($"{addressPort[0]}", port, nwc)
+            {
+                DataConnectionType = (settings.mode.ToLower() == "active")
+                    ? FtpDataConnectionType.AutoActive
+                    : FtpDataConnectionType.AutoPassive
+            };
+
             _client.Connect();
             _client.SetWorkingDirectory(settings.directory);
             return true;
         }
 
-        public List<string> GetFileList()
+        public List<string> GetFileList(string prefix)
         {
             List<string> files = new List<string>();
             foreach (FtpListItem item in _client.GetListing())
@@ -43,18 +60,59 @@ namespace FTPSync.Logic.Infra
                 // if this is a file
                 if (item.Type == FtpFileSystemObjectType.File)
                 {
-                    files.Add(item.FullName);
+
+                    files.Add(item.Name);
                 }
 
             }
 
-            return files;
+            CleanFilesList(files, prefix);
+                return  files;
         }
 
         public void Disconnect()
         {
            _client?.Disconnect();
             _client = null;
+        }
+
+        public void DownloadFile(string nameOnFTP, string localName)
+        {
+            _client.DownloadFile(localName, nameOnFTP, true, FtpVerify.None, null);
+        }
+
+        public override void RenameFile(string @from, string to)
+        {
+            _client.MoveFile(from, to, FtpExists.Overwrite);
+        }
+
+        /// <summary>
+        /// Upload a file
+        /// </summary>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="settings">see FTPDestination check for ifExists and removePrepend</param>
+        /// <returns>True if uploaded, false if not uploaded because already existing</returns>
+        public bool UploadFile(string from, string to, DestinationFTP settings)
+        {
+            if (!File.Exists(from))
+            {
+                throw new FileNotFoundException("Local file not found",from);
+            }
+            if (settings.actionIfFileExists == DestinationFTP.IfExistsDontTransfer)
+            {
+                if (_client.FileExists(to))
+                    return false;
+            }
+            _client.UploadFile(from, to,FtpExists.Overwrite);
+            RenameIfPrepend(to, settings);
+            return true;
+        }
+
+
+        public void DeleteFile(string file)
+        {
+           _client.DeleteFile(file);
         }
     }
 }

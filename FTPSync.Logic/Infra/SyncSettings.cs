@@ -1,0 +1,142 @@
+﻿
+
+// ReSharper disable InconsistentNaming
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Diagnostics;
+using System.Linq;
+
+namespace FTPSync.Logic.Infra
+{
+    
+    public interface IFTPSettings
+    {
+         string protocol { get; set; }
+        string address { get; set; }
+        string userName { get; set; }
+        string password { get; set; }
+        string directory { get; set; }
+
+        string mode { get; set; }
+
+    }
+
+    public abstract class DefinitionFTP: IFTPSettings,IValidatableObject
+    {
+        public static readonly string ModeActive="Active";
+        public static readonly string ModePassive= "Passive";
+        [Required]
+        public string protocol { get; set; }
+        [Required]
+        public string address { get; set; }
+        public string userName { get; set; }
+        public string password { get; set; }
+        public string directory { get; set; }
+        [Required]
+        public string mode { get; set; }
+        public string encryption { get; set; }
+
+        public static bool TryValidate(object obj, out ICollection<ValidationResult> results)
+        {
+            var context = new ValidationContext(obj, serviceProvider: null, items: null);
+            results = new List<ValidationResult>();
+            return Validator.TryValidateObject(
+                obj, context, results,
+                validateAllProperties: true
+            );
+        }
+        public virtual IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            List<ValidationResult> result=new List<ValidationResult>();
+            ICollection<ValidationResult> lstvalidationResult;
+
+            //bool valid = TryValidate(this, out lstvalidationResult);
+            //if (!valid)
+            //    result.AddRange(lstvalidationResult);
+            var validValues = new List<string> { ModeActive, ModePassive };
+            if (validValues.Contains(mode) == false)
+            {
+                result.Add(new ValidationResult($"mode must be one of {String.Join(",", validValues)}"));
+            }
+            validValues = new List<string> { "FTP", "SFTP" };
+            if (validValues.Contains(protocol) == false)
+            {
+                result.Add(new ValidationResult($"protocol must be one of {String.Join(",", validValues)}"));
+            }
+            return result;
+        }
+    }
+
+    [DebuggerDisplay("{address} Delete {deleteFileAfterTransfer}")]
+    public class SourceFTP: DefinitionFTP
+    { 
+
+        public bool changeFileNameBeforeTransfer { get; set; }
+        public string changeFileNamePrepend { get; set; }
+        public bool deleteFileAfterTransfer { get; set; }
+
+        public string GetPrepend()
+        {
+            if (changeFileNameBeforeTransfer)
+                return changeFileNamePrepend;
+            return null;
+        }
+      
+    }
+
+    public class DestinationFTP:DefinitionFTP
+    {
+        public static readonly string IfExistsOverwrite = "Overwrite";
+        public static readonly string IfExistsDontTransfer = "DontTransfer";
+
+        public bool changeFileNameAfterTransfer { get; set; }
+        public string changeFileNamerRemovePrepend { get; set; }
+        public string actionIfFileExists { get; set; }
+
+
+
+        public string GetPrepend()
+        {
+            if (changeFileNameAfterTransfer)
+                return changeFileNamerRemovePrepend;
+            return null;
+        }
+
+        public override IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            var result = base.Validate(validationContext).ToList();
+            var validValues = new List<string> {IfExistsOverwrite,IfExistsDontTransfer};
+            if (validValues.Contains(actionIfFileExists) == false)
+            {
+                result.Add(new ValidationResult($"actionIfFileExists must be one of {String.Join(",",validValues)}"));
+            }
+
+            return result;
+        }
+    }
+
+    public class SyncSettings
+    {
+        public int serviceIntervalInMinutes { get; set; }
+        public SourceFTP sourceFTP { get; set; }
+        public DestinationFTP destinationFTP { get; set; }
+        public List<ValidationResult> Validate()
+        {
+            var result = new List<ValidationResult>();
+            result.AddRange(sourceFTP.Validate(null));
+            result.AddRange(destinationFTP.Validate(null));
+            //ICollection<ValidationResult> results;
+            //if (DefinitionFTP.TryValidate(sourceFTP, out results))
+            //{
+            //    result.AddRange(results);
+            //}
+            //if (DefinitionFTP.TryValidate(destinationFTP, out results))
+            //{
+            //    result.AddRange(results);
+            //}
+            return result;
+        }
+    }
+}
