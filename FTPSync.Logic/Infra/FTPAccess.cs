@@ -45,6 +45,17 @@ namespace FTPSync.Logic.Infra
                     : FtpDataConnectionType.AutoPassive,
                
             };
+            if (settings.encryption != DestinationFTP.EncryptionNone)
+            {
+                if (settings.encryption == DestinationFTP.EncryptionSSL)
+                {
+                    _client.EncryptionMode = FtpEncryptionMode.Implicit;
+                }
+                else
+                {
+                    _client.EncryptionMode = FtpEncryptionMode.Explicit;
+                }
+            }
 
             _client.Connect();
             _client.SetWorkingDirectory(settings.directory);

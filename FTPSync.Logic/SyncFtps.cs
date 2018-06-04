@@ -69,6 +69,10 @@ namespace FTPSync.Logic
                         _logger.Info($"Delete {currentFile} on source {settings.sourceFTP.address} ");
                         source.DeleteFile(currentFile);
                     }
+                    else
+                    {
+                        source.RenameFile(currentFile,sourceFile);
+                    }
                 }
                 _logger.Info($"Done ! {sourceList.Count} file{(sourceList.Count > 1 ? "s" : "")} on source, {nbUploaded} file{(nbUploaded > 1 ? "s" : "")} uploaded");
             }

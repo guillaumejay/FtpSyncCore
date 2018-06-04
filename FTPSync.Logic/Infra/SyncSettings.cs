@@ -3,7 +3,9 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using Microsoft.Extensions.Configuration;
 
 namespace FTPSync.Logic.Infra
 {
@@ -14,7 +16,7 @@ namespace FTPSync.Logic.Infra
         string userName { get; set; }
         string password { get; set; }
         string directory { get; set; }
-
+        string encryption { get; set; }
         string mode { get; set; }
 
     }
@@ -23,6 +25,10 @@ namespace FTPSync.Logic.Infra
     {
         public static readonly string ModeActive="Active";
         public static readonly string ModePassive= "Passive";
+        public static readonly string EncryptionSSL = "SSL";
+        public static readonly string EncryptionTLS = "TLS";
+        public static readonly string EncryptionNone = "None";
+
         [Required]
         public string protocol { get; set; }
         [Required]
@@ -61,7 +67,7 @@ namespace FTPSync.Logic.Infra
             {
                 result.Add(new ValidationResult($"protocol must be one of {String.Join(",", validValues)}"));
             }
-            validValues = new List<string> { "None","SSL","TLS" };
+            validValues = new List<string> { EncryptionNone,EncryptionSSL,EncryptionTLS };
             if (protocol == "FTP")
             {
                 if (validValues.Contains(encryption) == false)
@@ -121,6 +127,16 @@ namespace FTPSync.Logic.Infra
             //    result.AddRange(results);
             //}
             return result;
+        }
+
+        public static SyncSettings Load()
+        {
+            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appSettings.json");
+            var configuration = builder.Build();
+            var settings = new SyncSettings();
+            configuration.Bind(settings);
+            return settings;
         }
     }
 }

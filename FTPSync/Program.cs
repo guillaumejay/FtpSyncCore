@@ -10,11 +10,8 @@ namespace FTPSync
     {
         static void Main(string[] args)
         {
-            var builder = new ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory())
-                .AddJsonFile("appSettings.json");
-            var configuration = builder.Build();
-            var settings = new SyncSettings();
-            configuration.Bind(settings);
+        
+            var settings=SyncSettings.Load();
 
             NLog.Logger logger = NLog.LogManager.LoadConfiguration("NLog.config").GetCurrentClassLogger();
             logger.Info($"serviceIntervalInMinutes {settings.serviceIntervalInMinutes}");
