@@ -24,7 +24,7 @@ namespace FTPSync
                 sf.Process(settings);
                 if (settings.serviceIntervalInMinutes == 0)
                     break;
-                Thread.Sleep(1000 * settings.serviceIntervalInMinutes);
+                Thread.Sleep(60*1000 * settings.serviceIntervalInMinutes);
             }
         }
     }

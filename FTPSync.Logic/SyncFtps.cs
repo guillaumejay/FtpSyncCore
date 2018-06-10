@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Sockets;
 using FTPSync.Logic.Infra;
+using NLog;
 using NLog.LayoutRenderers;
 
 namespace FTPSync.Logic
@@ -11,7 +13,7 @@ namespace FTPSync.Logic
     {
         private NLog.Logger _logger;
         private string _pathTemp = "tmp";
-
+        private string _currentAction;
         public SyncFtps(NLog.Logger logger)
         {
             _logger = logger;
@@ -19,6 +21,7 @@ namespace FTPSync.Logic
         public int Process(SyncSettings settings)
         {
             int nbUploaded = 0;
+            _currentAction = "Starting...";
             IServerAccess source = null;
             IServerAccess destinationClient = null;
             string currentFile = null;
@@ -35,8 +38,8 @@ namespace FTPSync.Logic
 
                     return 0;
                 }
-
-                _logger.Info("Connecting to Source " + settings.sourceFTP.address);
+                SetCurrentAction("Connecting to Source " + settings.sourceFTP.address);
+ 
              source  = ServerAccess.CreateAccessTo(settings.sourceFTP);
                 List<string> sourceList = source.GetFileList(settings.changeFileNamePrepend);
                 _logger.Info($"{sourceList.Count} files found to transfer");
@@ -56,32 +59,37 @@ namespace FTPSync.Logic
                     if (!string.IsNullOrWhiteSpace(prepend))
                     {
                         currentFile = prepend + currentFile;
-                        source.RenameFile(sourceFile, currentFile);
+                        SetCurrentAction($"Renaming {originalFile} => {currentFile}");
+                        source.RenameFile(originalFile, currentFile);
                     }
 
                     string localFile = Path.Combine(_pathTemp, currentFile);
-                    _logger.Info("Downloading " + currentFile);
+                    SetCurrentAction("Downloading " + currentFile);
                     source.DownloadFile(currentFile, localFile);
                     source.Disconnect();
                     source = null;
-                    _logger.Info("Uploading " + localFile);
+                    SetCurrentAction("Uploading " + localFile);
                    destinationClient = ServerAccess.CreateAccessTo(settings.destinationFTP);
                     if (destinationClient.UploadFile(localFile, currentFile, settings.destinationFTP,
                         settings.changeFileNamePrepend))
                     {
                         nbUploaded++;
                     }
-
+                    SetCurrentAction("Connecting to Source " + settings.sourceFTP.address);
                     // Reconnect to source do delete and do next download
                     source = ServerAccess.CreateAccessTo(settings.sourceFTP);
                     if (settings.sourceFTP.deleteFileAfterTransfer)
                     {
-                        _logger.Info($"Delete {currentFile} on source {settings.sourceFTP.address} ");
+                       SetCurrentAction($"Delete {currentFile} on source {settings.sourceFTP.address} ");
                         source.DeleteFile(currentFile);
                     }
                     else
                     {
-                        source.RenameFile(currentFile, originalFile);
+                        if (currentFile != originalFile)
+                        {
+                            SetCurrentAction($"Renaming {currentFile} => {originalFile}");
+                            source.RenameFile(currentFile, originalFile);
+                        }
                     }
 
                     currentFile = null;
@@ -92,14 +100,30 @@ namespace FTPSync.Logic
             }
             catch (Exception e)
             {
-                _logger.Error(e);
+                LogExceptionCleanly(e);
+        
                 if (currentFile != null && originalFile != null && currentFile != originalFile)
                 { //Need to rename the original file
-                    if (source == null)
+                    try
                     {
-                        source= ServerAccess.CreateAccessTo(settings.sourceFTP);
+                        if (source == null)
+                        {
+                            SetCurrentAction("AFTER EXCEPTION Connecting to Source " + settings.sourceFTP.address);
+                            source = ServerAccess.CreateAccessTo(settings.sourceFTP);
+                        }
+
+                        SetCurrentAction($"AFTER EXCEPTION Renaming {currentFile} => {originalFile}");
+                        source.RenameFile(currentFile, originalFile);
                     }
-                    source.RenameFile(currentFile,originalFile);
+                    catch (Exception exception)
+                    {
+                        LogExceptionCleanly(exception);
+                    }
+                    finally
+                    {
+                        source?.Disconnect();
+                    }
+           
                 }
              
                 return nbUploaded;
@@ -112,6 +136,30 @@ namespace FTPSync.Logic
                 
             }
             return nbUploaded;
+        }
+
+        private void SetCurrentAction(string s)
+        {
+            _currentAction = s;
+            _logger.Info(s);
+        }
+
+        private void LogExceptionCleanly(Exception exception)
+        {
+            if (exception.InnerException != null)
+            {
+                LogExceptionCleanly(exception.InnerException);
+                return;
+            }
+
+            string onAction = $"On {_currentAction} - ";
+            if (exception is SocketException ce)
+            {
+                _logger.Error($"{onAction}{ce.Message}");
+                return;
+            }
+
+            _logger.Fatal( exception, "On { _currentAction}");
         }
 
         private void EmptyTmpFolder()
